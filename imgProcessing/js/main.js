@@ -7,11 +7,13 @@ if (!window.FileReader) {
 
     document.querySelector('body').innerHTML = message;
 } else {
-    document.getElementById('fileDropBox').addEventListener('dragover', handleDragOver, false);
-    document.getElementById('fileDropBox').addEventListener('drop', handleFileSelection, false);
+	
+    //document.getElementById('fileDropBox').addEventListener('dragover', handleDragOver, false);
+    //document.getElementById('fileDropBox').addEventListener('drop', handleFileSelection, false);
     document.getElementById('files').addEventListener('change', handleFileSelection, false);
     // April's
-    document.getElementById('genButton').addEventListener('click', generateSomething, false);
+    //document.getElementById('genButton').addEventListener('click', generateSomething, false);
+    document.getElementById('csvButton').addEventListener('click', saveAsCSV, false);
 }
 
 function handleDragOver(evt) {
@@ -44,13 +46,15 @@ function displayFileText(filename, evt) {
         vp3Read(view, pattern);
     } else if (filename.endsWith("xxx")) {            
         xxxRead(view, pattern);
+    } else if (filename.endsWith("csv")) {            
+        csvRead(view, pattern);
     }
     //console.log("..  " + pattern.stitches[0].x + ", " + pattern.stitches[0].y );
-    console.log(".  " + pattern.stringifyStitches());
+    //console.log(".  " + pattern.stringifyStitches());
     pattern.moveToPositive();
-    console.log("..  " + pattern.stringifyStitches());
+    //console.log("..  " + pattern.stringifyStitches());
     pattern.drawShape(document.getElementById('mycanvas'));
-    console.log("...  " + pattern.stringifyStitches());
+    //console.log("...  " + pattern.stringifyStitches());
     
     // April's
     pattern.loadedFileName = filename;
@@ -149,4 +153,22 @@ function generateSomething(evt){
 	}
 	
 	//window.requestFileSystem(window.PERSISTENT, 1024*1024, saveFile);
+}
+
+function saveAsCSV(evt){
+	if(currentlyLoadedPattern){
+		var nameWithoutExt = currentlyLoadedPattern.loadedFileName.split(".")[0];
+		csvWrite(nameWithoutExt + ".csv", currentlyLoadedPattern);
+		
+	} else {
+		// DO NOTHING, THERE IS NO FIIILE
+		// okay no we can test saving a file real quick here
+		var testStr = "0,0,0,0,1,0\n";
+		testStr += "0,0,0,0,0,1";
+		
+		var blob = new Blob([testStr], {type:"text/csv;charset=utf-8;"});
+		
+		saveAs(blob, "test.csv");
+		
+	}
 }

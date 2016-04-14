@@ -101,14 +101,22 @@
             pattern.addStitchRel(x, y, flags, true);
             prevJump = thisJump;
             
-            console.log("Stitch... " + x + ", " + y + " -- flags: " + flags);
-            //if(thisJump) console.log("there was a jump! ", flags);
+            //console.log("Stitch... " + x + ", " + y + " -- flags: " + flags);
+            if(thisJump) console.log("there was a jump! ", flags);
         }
         //console.log("1  " + pattern.stitches[0].x + ", " + pattern.stitches[0].y );
-        pattern.addStitchRel(0, 0, global.stitchTypes.end, true);
+        var lastStitchInPattern = pattern.stitches[pattern.stitches.length-1];
+        if(lastStitchInPattern.flags & global.stitchTypes.end === global.stitchTypes.end){
+        	// The last stitch in the pattern is correctly an "end" so we can leave it alone
+        } else {
+        	// Otherwise, add the last stitch as an end
+        	//pattern.addStitchRel(lastStitchInPattern.x, lastStitchInPattern.y, global.stitchTypes.end, true);
+        	pattern.addStitchRel(0, 0, global.stitchTypes.end, true);
+        	
+        }
         pattern.invertPatternVertical();
         //console.log("2  " + pattern.stitches[0].x + ", " + pattern.stitches[0].y );
-        console.log("stitches", pattern.stitches);
+        console.log("Pattern stitches", pattern.stitches);
     }
     
      /*

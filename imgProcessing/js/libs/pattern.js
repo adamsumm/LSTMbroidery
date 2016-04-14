@@ -64,7 +64,7 @@
 			this.prepPatternWithFirstStitch(x, y);
 		}*/
 		
-		if(x === 0 && y === 0) console.log("!!!! I am making an abs stitch at 0, 0...?");
+		//if(x === 0 && y === 0) console.log("!!!! I am making an abs stitch at 0, 0...?");
 		this.stitches[this.stitches.length] = new Stitch(x, y, flags, this.currentColorIndex);
 	};
 
@@ -76,11 +76,11 @@
 				ny = this.lastY + dy;
 			this.lastX = nx;
 			this.lastY = ny;
-			if(nx === 0 && ny === 0) console.log("relative stitch at nx, ny === 0. This is okay.");
+			//if(nx === 0 && ny === 0) console.log("relative stitch at nx, ny === 0. This is okay.");
 			this.addStitchAbs(nx, ny, flags, isAutoColorIndex);
 		} else {
 			this.addStitchAbs(dx, dy, flags, isAutoColorIndex);
-			if(dx === 0 && dy === 0) console.log("!!!! relative stitch at dx, dy === 0. This is probably NOT okay.");
+			//f(dx === 0 && dy === 0) console.log("!!!! relative stitch at dx, dy === 0. This is probably NOT okay.");
 		}
 	};
 	
@@ -230,34 +230,65 @@
         this.colors.splice(maxColorIndex + 1, this.colors.length - maxColorIndex - 1);
 	};
 	
+	var drawNeedlePos = function(context, x, y, rad, flag){
+		context.beginPath();
+		
+		if((stitchTypes.jump & flag) === stitchTypes.jump){
+			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.fillStyle = 'black';
+		} else if ((stitchTypes.trim & flag) === stitchTypes.trim) {
+			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.fillStyle = 'green';
+		} else if ((stitchTypes.stop & flag) === stitchTypes.stop ||
+				   (stitchTypes.end & flag) === stitchTypes.end){
+			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.fillStyle = 'red';
+		} else{
+			context.arc(x, y, rad, 0, 2 * Math.PI, false);
+			context.fillStyle = 'grey';
+		}
+		
+		context.fill();
+	};
+	
 	Pattern.prototype.drawShape = function(canvas) {
 		canvas.width = this.right;
 		canvas.height = this.bottom;
 		if (canvas.getContext) {
 			var ctx = canvas.getContext('2d');
-			ctx.beginPath();
-			var color = this.colors[this.stitches[0].color];
-			ctx.strokeStyle = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-			for(var i = 0; i < this.stitches.length; i++)
-			{
-				var currentStitch = this.stitches[i];
-				if (currentStitch.flags === stitchTypes.jump || currentStitch.flags === stitchTypes.trim || currentStitch.flags === stitchTypes.stop) {
-					//console.log("moving drawing location", currentStitch.flags);
-					//console.log(stitchTypes);
-					ctx.stroke(); // Draws the previously laid path
-					var color = this.colors[currentStitch.color]; // Swaps color
-					ctx.beginPath(); 
+
+			// Since we skip the first stitch in drawing lines, draw its needle position here
+			drawNeedlePos(ctx, this.stitches[0].x, this.stitches[0].y, 2, this.stitches[0].flags);
+			
+			for(var i = 1; i < this.stitches.length; i++){
+				var lastSt = this.stitches[i-1];
+				var curSt = this.stitches[i];
+				
+				var color = this.colors[lastSt.color]; // Swaps color
+				
+				// If this stitch is not a jump (ie, we did not jump here), AND THIS stitch is not a jump, draw a line here
+				if((stitchTypes.jump & lastSt.flags) === stitchTypes.jump || 
+				   (stitchTypes.trim & lastSt.flags) === stitchTypes.trim ||
+				   (stitchTypes.jump & curSt.flags) === stitchTypes.jump || 
+				   (stitchTypes.trim & curSt.flags) === stitchTypes.trim){
+				   	// DO NOTHIIIIING
+			   } else {
+				   	
+				   	ctx.beginPath();
 					ctx.strokeStyle = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-					ctx.moveTo(currentStitch.x, currentStitch.y); // Moves to point WITHOUT creating a line
+					ctx.moveTo(lastSt.x, lastSt.y); // Moves to point WITHOUT creating a line
+				   	
+					ctx.lineTo(curSt.x, curSt.y); 
+					ctx.stroke(); 
 				}
-				ctx.lineTo(currentStitch.x, currentStitch.y); 
-				// Adds a new point and creates a line from this point to the last
+				
+				drawNeedlePos(ctx, curSt.x, curSt.y, 2, curSt.flags);
 			}
-			ctx.stroke(); 
+			
 		} else {
 			global.alert('You need Safari or Firefox 1.5+ to see this demo.');
 		}
-	}
+	};
 	
 	Pattern.prototype.stringifyStitches = function(){
 		var results = "";
@@ -265,8 +296,9 @@
 			results += i + ": (" + this.stitches[i].x + ", " + this.stitches[i].y + ")  ";
 		}
 		return results;
-	}
-
+	};
+	
+	
 	global.Color = Color.prototype.constructor;
 	global.Pattern = Pattern.prototype.constructor;
 	global.stitchTypes = stitchTypes;
