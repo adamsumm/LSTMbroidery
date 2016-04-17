@@ -2,7 +2,7 @@
 <html manifest="manifest.appcache">
   <head>
     <meta charset="utf-8">
-    <title>Drag &amp; Drop File Selection</title> 
+    <title>Sizing Stitch Images</title> 
     <style type="text/css">
       #fileDropBox {
         width: 20em;
@@ -15,13 +15,19 @@
     </style>
   </head>
   <body>
-    <h3>Select a .DST, .EXP, .JEF, .PCS, .PEC, .PES, .VP3, or .XXX file or drag and drop one to the drop box below:</h3>
-        <input type="file" id="files" name="files[]" multiple />
+    <h3>Select a .DST, .EXP, .JEF, .PCS, .PEC, .PES, .VP3, or .XXX file to process:</h3>
+        <input type="file" id="files" name="files[]" />
     <!-- <div id="fileDropBox">Drop files here.</div> -->
     <!--<button id="genButton">Generate Something!</button> -->
     <button id="csvButton">Save as CSV</button>
-    <canvas id="mycanvas"></canvas>
-    <canvas id="tinycanvas"></canvas>
+    <button id="pngSaveTiny">Save tinyCanvas as .png</button>
+    <button id="pngSaveBig">Save bigCanvas as .png</button>
+    <input type="file" id="overlayImage" name="overlayFile"  />
+    <br />
+    
+    <canvas id="tinycanvas" width="227" height="227" style="border:1px solid"></canvas>
+    <canvas id="medcanvas" width="500" height="500" style="border:1px solid"></canvas>
+    <canvas id="mycanvas" width="1000" height="1000" style="border:1px solid"></canvas>
     <script src="js/libs/jdataview.js"></script>
     <script src="js/libs/FileSaver.js"></script>
     <script src="js/libs/pattern.js"></script>

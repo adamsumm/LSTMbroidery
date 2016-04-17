@@ -234,14 +234,14 @@
 		context.beginPath();
 		
 		if((stitchTypes.jump & flag) === stitchTypes.jump){
-			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.arc(x, y, rad, 0, 2 * Math.PI, false);
 			context.fillStyle = 'black';
 		} else if ((stitchTypes.trim & flag) === stitchTypes.trim) {
-			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.arc(x, y, rad, 0, 2 * Math.PI, false);
 			context.fillStyle = 'green';
 		} else if ((stitchTypes.stop & flag) === stitchTypes.stop ||
 				   (stitchTypes.end & flag) === stitchTypes.end){
-			context.arc(x, y, rad*2, 0, 2 * Math.PI, false);
+			context.arc(x, y, rad, 0, 2 * Math.PI, false);
 			context.fillStyle = 'red';
 		} else{
 			context.arc(x, y, rad, 0, 2 * Math.PI, false);
@@ -251,14 +251,30 @@
 		context.fill();
 	};
 	
-	Pattern.prototype.drawShape = function(canvas) {
-		canvas.width = this.right;
-		canvas.height = this.bottom;
+	Pattern.prototype.drawShape = function(canvas, scale, showPoints) {
+		canvas.width = canvas.width;
+		//canvas.width = this.right;
+		//canvas.height = this.bottom;
+		var stScale = 1;
+		
+		if (scale !== undefined && scale < 1 && scale >= 0){
+			stScale = scale;
+		} else if (scale > 1 || scale < 0){
+			console.log("invalid scale sent to Pattern.drawShape. using default scale 1");
+		}
+		
+		/// 1000 is known as the max canvas and stitch  window
+		var topBuffer = (1000 - this.bottom)/2 * stScale; 
+		var leftBuffer = (1000 - this.right)/2 * stScale;
+		console.log( "topBuffer, leftBuffer: " + topBuffer + ", " + leftBuffer);
+		
 		if (canvas.getContext) {
 			var ctx = canvas.getContext('2d');
 
-			// Since we skip the first stitch in drawing lines, draw its needle position here
-			drawNeedlePos(ctx, this.stitches[0].x, this.stitches[0].y, 2, this.stitches[0].flags);
+			if(showPoints !== undefined && showPoints === true){
+				// Since we skip the first stitch in drawing lines, draw its needle position here
+				drawNeedlePos(ctx, leftBuffer + (this.stitches[0].x * stScale), topBuffer + (this.stitches[0].y * stScale), 2, this.stitches[0].flags);
+			}
 			
 			for(var i = 1; i < this.stitches.length; i++){
 				var lastSt = this.stitches[i-1];
@@ -276,13 +292,15 @@
 				   	
 				   	ctx.beginPath();
 					ctx.strokeStyle = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-					ctx.moveTo(lastSt.x, lastSt.y); // Moves to point WITHOUT creating a line
+					ctx.moveTo(leftBuffer + (lastSt.x * stScale), topBuffer + (lastSt.y * stScale)); // Moves to point WITHOUT creating a line
 				   	
-					ctx.lineTo(curSt.x, curSt.y); 
+					ctx.lineTo(leftBuffer + (curSt.x * stScale), topBuffer + (curSt.y * stScale)); 
 					ctx.stroke(); 
 				}
 				
-				drawNeedlePos(ctx, curSt.x, curSt.y, 2, curSt.flags);
+				if(showPoints !== undefined && showPoints === true){
+					drawNeedlePos(ctx, leftBuffer + (curSt.x * stScale), topBuffer + (curSt.y * stScale), 2, curSt.flags);
+				} 
 			}
 			
 		} else {

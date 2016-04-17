@@ -11,9 +11,12 @@ if (!window.FileReader) {
     //document.getElementById('fileDropBox').addEventListener('dragover', handleDragOver, false);
     //document.getElementById('fileDropBox').addEventListener('drop', handleFileSelection, false);
     document.getElementById('files').addEventListener('change', handleFileSelection, false);
+    document.getElementById('overlayImage').addEventListener('change', handleImageOverlaySelection, false);
     // April's
     //document.getElementById('genButton').addEventListener('click', generateSomething, false);
     document.getElementById('csvButton').addEventListener('click', saveAsCSV, false);
+    document.getElementById('pngSaveTiny').addEventListener('click', saveTinyAsPng, false);
+    document.getElementById('pngSaveBig').addEventListener('click', saveBigAsPng, false);
 }
 
 function handleDragOver(evt) {
@@ -53,12 +56,21 @@ function displayFileText(filename, evt) {
     //console.log(".  " + pattern.stringifyStitches());
     pattern.moveToPositive();
     //console.log("..  " + pattern.stringifyStitches());
-    pattern.drawShape(document.getElementById('mycanvas'));
     //console.log("...  " + pattern.stringifyStitches());
-    
-    // April's
+
     pattern.loadedFileName = filename;
     currentlyLoadedPattern = pattern;
+    redrawPattern();
+}
+
+function redrawPattern(){
+	currentlyLoadedPattern.drawShape(document.getElementById('mycanvas'), 1, true);
+    currentlyLoadedPattern.drawShape(document.getElementById('medcanvas'), .5, false);
+    currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, false);
+}
+
+function loadOverlayImage(file){
+	
 }
 
 function handleFileReadAbort(evt) {
@@ -91,6 +103,24 @@ function handleFileReadError(evt) {
 
 function startFileRead(fileObject) {
     var reader = new FileReader();
+
+    // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
+    reader.onloadend = function (x) { 
+    	// fileDisplayArea.innerHTML = "";
+    	var img = new Image();
+    	img.src = reader.result;
+    	// fileDisplayArea.appendChild(img);
+    }; // "onloadend" fires when the file contents have been successfully loaded into memory.
+    reader.abort = handleFileReadAbort; // "abort" files on abort.
+    reader.onerror = handleFileReadError; // "onerror" fires if something goes awry.
+
+    if (fileObject) { // Safety first.
+      reader.readAsDataURL(fileObject); // Asynchronously start a file read thread. Other supported read methods include readAsArrayBuffer() and readAsDataURL().
+    }
+}
+
+function startImageRead(fileObject){
+	var reader = new FileReader();
 
     // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
     reader.onloadend = function (x) { displayFileText.apply(null, [fileObject.name, x]); }; // "onloadend" fires when the file contents have been successfully loaded into memory.
@@ -126,6 +156,31 @@ function handleFileSelection(evt) {
     }
 }
 
+function handleImageOverlaySelection(evt){
+	evt.stopPropagation();
+    evt.preventDefault();
+    
+    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
+
+    if (!files) {
+      alert("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
+      return;
+    }
+    
+    for (var i = 0, file; file = files[i]; i++) {
+      if (!file) {
+            alert("Unable to access " + file.name); 
+            continue;
+      }
+      if (file.size == 0) {
+            alert("Skipping " + file.name.toUpperCase() + " because it is empty.");
+            continue;
+      }
+      loadOverlayImage(file);
+    }
+    
+}
+
 function generateSomething(evt){
 	
 	if(currentlyLoadedPattern){
@@ -153,6 +208,34 @@ function generateSomething(evt){
 	}
 	
 	//window.requestFileSystem(window.PERSISTENT, 1024*1024, saveFile);
+}
+
+function saveTinyAsPng(evt){
+	var canvas = document.getElementById("tinycanvas");
+	var name = "tinyEmpty.png";
+	
+	if(currentlyLoadedPattern){
+		name = currentlyLoadedPattern.loadedFileName.split(".")[0];
+		name += "_tiny.png";
+	}
+	
+	canvas.toBlob(function(blob) {
+	    saveAs(blob, name);
+	});
+}
+
+function saveBigAsPng(evt){
+	var canvas = document.getElementById("mycanvas");
+	var name = "bigEmpty.png";
+	
+	if(currentlyLoadedPattern){
+		name = currentlyLoadedPattern.loadedFileName.split(".")[0];
+		name += "_big.png";
+	}
+	
+	canvas.toBlob(function(blob) {
+	    saveAs(blob, name);
+	});
 }
 
 function saveAsCSV(evt){
