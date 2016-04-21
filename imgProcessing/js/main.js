@@ -29,6 +29,51 @@ String.prototype.endsWith = function(suffix) {
 };
 
 var currentlyLoadedPattern;
+
+///////////////////////////////////////////////////////////////
+/// EMBROIDERY FILE FORMAT READER ///
+/// Goes handleFileSelection -> startFileRead -> displayFileText -> then draws the pattern
+////////////////////////////////////////////////////////////////
+
+
+function handleFileSelection(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
+
+    if (!files) {
+      alert("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
+      return;
+    }
+
+    for (var i = 0, file; file = files[i]; i++) {
+      if (!file) {
+            alert("Unable to access " + file.name); 
+            continue;
+      }
+      if (file.size == 0) {
+            alert("Skipping " + file.name.toUpperCase() + " because it is empty.");
+            continue;
+      }
+      startFileRead(file);
+    }
+}
+
+
+function startFileRead(fileObject){
+	var reader = new FileReader();
+
+    // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
+    reader.onloadend = function (x) { displayFileText.apply(null, [fileObject.name, x]); }; // "onloadend" fires when the file contents have been successfully loaded into memory.
+    reader.abort = handleFileReadAbort; // "abort" files on abort.
+    reader.onerror = handleFileReadError; // "onerror" fires if something goes awry.
+
+    if (fileObject) { // Safety first.
+      reader.readAsArrayBuffer(fileObject); // Asynchronously start a file read thread. Other supported read methods include readAsArrayBuffer() and readAsDataURL().
+    }
+}
+
 function displayFileText(filename, evt) {
     var view = new jDataView(evt.target.result, 0, evt.size);
     var pattern = new Pattern();
@@ -69,9 +114,93 @@ function redrawPattern(){
     currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, false);
 }
 
-function loadOverlayImage(file){
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////
+/// IMAGE FORMAT READER ///
+/// handleImageOverlaySelection -> startImageRead -> showOverlayDiv
+////////////////////////////////////////////////////////////////
+
+function handleImageOverlaySelection(evt){
+	evt.stopPropagation();
+    evt.preventDefault();
+    
+    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
+
+    if (!files) {
+      alert("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
+      return;
+    }
+    
+    for (var i = 0, file; file = files[i]; i++) {
+      if (!file) {
+            alert("Unable to access " + file.name); 
+            continue;
+      }
+      if (file.size == 0) {
+            alert("Skipping " + file.name.toUpperCase() + " because it is empty.");
+            continue;
+      }
+      startImageRead(file);
+    }
+    
+}
+
+function startImageRead(fileObject) {
+    var reader = new FileReader();
+
+    // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
+    reader.onloadend = function (x) { 
+    	// fileDisplayArea.innerHTML = "";
+    	var img = new Image();
+    	img.src = reader.result;
+    	// fileDisplayArea.appendChild(img);
+    	showOverlayDiv(img);
+    }; // "onloadend" fires when the file contents have been successfully loaded into memory.
+    reader.abort = handleFileReadAbort; // "abort" files on abort.
+    reader.onerror = handleFileReadError; // "onerror" fires if something goes awry.
+
+    if (fileObject) { // Safety first.
+      reader.readAsDataURL(fileObject); // Asynchronously start a file read thread. Other supported read methods include readAsArrayBuffer() and readAsDataURL().
+    }
+}
+
+
+function showOverlayDiv(img){
+	var overlayDiv = document.getElementById('overlayDiv');
+	// Show overlay div
+	overlayDiv.style.visibility = "visible";
+	
+	// Position overlay div over target canvas -- should this be a parameter?
+	var targetCanvas = document.getElementById('mycanvas');
+	console.log("targetCanvas..."); console.log(targetCanvas);
+	console.log($('#mycanvas').position());
+	
+	
+	overlayDiv.width = "1000px";
+	overlayDiv.height = "1000px";
+	img.width = 1000;
+	img.height = 1000;
+	overlayDiv.style.left = $('#mycanvas').position().left +"px";
+	overlayDiv.style.top = $('#mycanvas').position().top +"px";
+	
+	// Put in the image
+	overlayDiv.appendChild(img);
 	
 }
+
+function hideOverlayDiv(){
+	var overlayDiv = document.getElementById('overlayDiv');
+	overlayDiv.style.visibility = "hidden";
+}
+
+
+
+////////////////////////////////////////////////////////////////
+//// MUTUAL FUNCTIONS ////
+////////////////////////////////////////////////////////////////
 
 function handleFileReadAbort(evt) {
     alert("File read aborted.");
@@ -101,85 +230,9 @@ function handleFileReadError(evt) {
     }
 }
 
-function startFileRead(fileObject) {
-    var reader = new FileReader();
-
-    // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
-    reader.onloadend = function (x) { 
-    	// fileDisplayArea.innerHTML = "";
-    	var img = new Image();
-    	img.src = reader.result;
-    	// fileDisplayArea.appendChild(img);
-    }; // "onloadend" fires when the file contents have been successfully loaded into memory.
-    reader.abort = handleFileReadAbort; // "abort" files on abort.
-    reader.onerror = handleFileReadError; // "onerror" fires if something goes awry.
-
-    if (fileObject) { // Safety first.
-      reader.readAsDataURL(fileObject); // Asynchronously start a file read thread. Other supported read methods include readAsArrayBuffer() and readAsDataURL().
-    }
-}
-
-function startImageRead(fileObject){
-	var reader = new FileReader();
-
-    // Set up asynchronous handlers for file-read-success, file-read-abort, and file-read-errors:
-    reader.onloadend = function (x) { displayFileText.apply(null, [fileObject.name, x]); }; // "onloadend" fires when the file contents have been successfully loaded into memory.
-    reader.abort = handleFileReadAbort; // "abort" files on abort.
-    reader.onerror = handleFileReadError; // "onerror" fires if something goes awry.
-
-    if (fileObject) { // Safety first.
-      reader.readAsArrayBuffer(fileObject); // Asynchronously start a file read thread. Other supported read methods include readAsArrayBuffer() and readAsDataURL().
-    }
-}
-
-function handleFileSelection(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
-
-    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
-
-    if (!files) {
-      alert("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
-      return;
-    }
-
-    for (var i = 0, file; file = files[i]; i++) {
-      if (!file) {
-            alert("Unable to access " + file.name); 
-            continue;
-      }
-      if (file.size == 0) {
-            alert("Skipping " + file.name.toUpperCase() + " because it is empty.");
-            continue;
-      }
-      startFileRead(file);
-    }
-}
-
-function handleImageOverlaySelection(evt){
-	evt.stopPropagation();
-    evt.preventDefault();
-    
-    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files;
-
-    if (!files) {
-      alert("<p>At least one selected file is invalid - do not select any folders.</p><p>Please reselect and try again.</p>");
-      return;
-    }
-    
-    for (var i = 0, file; file = files[i]; i++) {
-      if (!file) {
-            alert("Unable to access " + file.name); 
-            continue;
-      }
-      if (file.size == 0) {
-            alert("Skipping " + file.name.toUpperCase() + " because it is empty.");
-            continue;
-      }
-      loadOverlayImage(file);
-    }
-    
-}
+////////////////////////////////////////////////////////////////
+//// SAVING/GENERATING FILE FUNCTIONS ////
+////////////////////////////////////////////////////////////////
 
 function generateSomething(evt){
 	
