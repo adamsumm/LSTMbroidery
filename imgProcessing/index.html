@@ -23,12 +23,17 @@
     <button id="pngSaveTiny">Save tinyCanvas as .png</button>
     <button id="pngSaveBig">Save bigCanvas as .png</button>
     <input type="file" id="overlayImage" name="overlayFile"  />
+    <button id="pngOverlay">Save Overlay as .png</button>
+    <button id="pngOverlaySmall">Save Overlay as 227px .png</button>
     <br />
     
     <canvas id="tinycanvas" width="227" height="227" style="border:1px solid"></canvas>
     <canvas id="medcanvas" width="500" height="500" style="border:1px solid"></canvas>
     <canvas id="mycanvas" width="1000" height="1000" style="border:1px solid"></canvas>
-    <div id="overlayDiv" style="visibility: hidden; position: absolute;"></div>
+    <div id="overlayDiv" style="visibility: hidden; position: absolute;">
+    	<canvas id="floatCanvas" width="1000" height="1000"></canvas>
+    </div>
+    <canvas id="secretCanvas" style="visibility: hidden;" width="227" height="227"></canvas>
     
     <script src="js/libs/jdataview.js"></script>
     <script src="js/libs/FileSaver.js"></script>

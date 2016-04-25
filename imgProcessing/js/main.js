@@ -17,6 +17,8 @@ if (!window.FileReader) {
     document.getElementById('csvButton').addEventListener('click', saveAsCSV, false);
     document.getElementById('pngSaveTiny').addEventListener('click', saveTinyAsPng, false);
     document.getElementById('pngSaveBig').addEventListener('click', saveBigAsPng, false);
+    document.getElementById('pngOverlay').addEventListener('click', saveOverlayAsPng, false);
+    document.getElementById('pngOverlaySmall').addEventListener('click', saveOverlayAsPngSmall, false);
 }
 
 function handleDragOver(evt) {
@@ -167,6 +169,9 @@ function startImageRead(fileObject) {
     }
 }
 
+// Set in showOverlayDiv, called with a fresh img
+var overlayImg = null;
+var overlayVars = null;
 
 function showOverlayDiv(img){
 	var overlayDiv = document.getElementById('overlayDiv');
@@ -177,18 +182,32 @@ function showOverlayDiv(img){
 	var targetCanvas = document.getElementById('mycanvas');
 	console.log("targetCanvas..."); console.log(targetCanvas);
 	console.log($('#mycanvas').position());
-	
-	
-	overlayDiv.width = "1000px";
-	overlayDiv.height = "1000px";
-	img.width = 1000;
-	img.height = 1000;
+
 	overlayDiv.style.left = $('#mycanvas').position().left +"px";
 	overlayDiv.style.top = $('#mycanvas').position().top +"px";
+	overlayDiv.style.opacity = "0.4";
 	
 	// Put in the image
-	overlayDiv.appendChild(img);
+	//overlayDiv.appendChild(img);
 	
+	img.onload = function(){
+		overlayImg = img;
+		resetOverlayVars();
+		redrawOverlayImage();
+	};
+	
+}
+
+function redrawOverlayImage(){
+	if(overlayImg !== null){
+		var imgCanvas = document.getElementById('floatCanvas');
+		var imgContext = imgCanvas.getContext('2d');
+		
+		// May have to check that dx and dy are not negative and instead draw it as sx and sy
+		// See https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+		imgContext.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
+		imgContext.drawImage(overlayImg, overlayVars.dx, overlayVars.dy, overlayVars.width, overlayVars.height);
+	}
 }
 
 function hideOverlayDiv(){
@@ -196,6 +215,112 @@ function hideOverlayDiv(){
 	overlayDiv.style.visibility = "hidden";
 }
 
+// Should send in size of canvas...
+function resetOverlayVars(){
+	overlayVars = {
+		dx:0, dy:0, width:1000, height:1000
+	};
+}
+
+////////////////////////////////////////////////////////////////
+/// IMAGE EDITING ///
+////////////////////////////////////////////////////////////////
+// Register keys
+// w,a,s,d - move image up,left,down,right --- BEING PREPARED TO CHOP/ADD PADDING AS NEEDED
+// i,j,k,l - stretch bigger vert, smaller hori, smaller vert, bigger hori (0,0 upper left axis directions)
+// 
+var keys = {};
+keys[87] = false; // w
+keys[65] = false; // a
+keys[83] = false; // s
+keys[68] = false; // d
+keys[73] = false; // i
+keys[74] = false; // j
+keys[75] = false; // k
+keys[76] = false; // l
+
+// Register keypress -> function
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', keyUp);
+
+function keyDown(e){
+	if(e.keyCode in keys)
+  		keys[e.keyCode] = true;
+}
+
+function keyUp(e){
+	if(e.keyCode in keys)
+  		keys[e.keyCode] = false;
+}
+
+function update(){
+	if(keys[87] === true){ //w
+		console.log("w...");
+		moveFloatingImage("up");
+	}
+	if(keys[65] === true){ // a
+		console.log("a...");
+		moveFloatingImage("left");
+	}
+	if(keys[83] === true){ // s
+		console.log("s...");
+		moveFloatingImage("down");
+	}
+	if(keys[68] === true){ // d
+		console.log("d...");
+		moveFloatingImage("right");
+	}
+	if(keys[73] === true){ // i
+		console.log("i...");
+		stretchFloatingImage("shrinkVert");
+	}
+	if(keys[74] === true){ // j
+		console.log("j...");
+		stretchFloatingImage("shrinkHori");
+	}
+	if(keys[75] === true){ // k
+		console.log("k...");
+		stretchFloatingImage("growVert");
+	}
+	if(keys[76] === true){ // l
+		console.log("l...");
+		stretchFloatingImage("growHori");
+	}
+}
+
+setInterval(update, 30);
+
+// Keypress functions
+
+function moveFloatingImage(direction){
+	if (direction === "up"){
+		overlayVars.dy--;
+	} else if (direction === "down"){
+		overlayVars.dy++;
+	} else if (direction === "right"){
+		overlayVars.dx++;
+	} else if (direction === "left"){
+		overlayVars.dx--;
+	} else {
+		console.log("moveFloatingImage unrecognized direction (should be up, down, right, left): " + direction);
+	}
+	redrawOverlayImage();
+}
+
+function stretchFloatingImage(direction){
+	if (direction === "shrinkVert"){
+		overlayVars.height--;
+	} else if (direction === "growVert"){
+		overlayVars.height++;
+	} else if (direction === "shrinkHori"){
+		overlayVars.width--;
+	} else if (direction === "growHori"){
+		overlayVars.width++;
+	} else {
+		console.log("stretchFloatingImage unrecognized direction (should be shrink/grow Vert/Hori): " + direction);
+	}
+	redrawOverlayImage();
+}
 
 
 ////////////////////////////////////////////////////////////////
@@ -289,6 +414,50 @@ function saveBigAsPng(evt){
 	canvas.toBlob(function(blob) {
 	    saveAs(blob, name);
 	});
+}
+
+function saveOverlayAsPng(evt){
+	if(overlayImg === null){
+		console.log("No image loaded into overlay canvas to save. ABORT!!!");
+		return;
+	}
+	
+	var canvas = document.getElementById('floatCanvas');
+	var name = "bigOverlay.png";
+	
+	if(currentlyLoadedPattern){
+		name = currentlyLoadedPattern.loadedFileName.split(".")[0];
+		name += "_bigO.png";
+	}
+	
+	canvas.toBlob(function(blob) {
+	    saveAs(blob, name);
+	});
+}
+
+function saveOverlayAsPngSmall(evt){
+	if(overlayImg === null){
+		console.log("No image loaded into overlay canvas to save. ABORT!!!");
+		return;
+	}
+	
+	var srcCanvas = document.getElementById('floatCanvas');
+	var canvas = document.getElementById('secretCanvas');
+	// TRANSFER CANVAS HERE!!!!
+	var dstCtx = canvas.getContext('2d');
+	dstCtx.drawImage(srcCanvas, 0, 0, 227, 227);
+	
+	var name = "smOverlay.png";
+	
+	if(currentlyLoadedPattern){
+		name = currentlyLoadedPattern.loadedFileName.split(".")[0];
+		name += ".png";
+	}
+	
+	canvas.toBlob(function(blob) {
+	    saveAs(blob, name);
+	});
+	
 }
 
 function saveAsCSV(evt){
