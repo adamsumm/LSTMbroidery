@@ -12,6 +12,7 @@ if (!window.FileReader) {
     //document.getElementById('fileDropBox').addEventListener('drop', handleFileSelection, false);
     document.getElementById('files').addEventListener('change', handleFileSelection, false);
     document.getElementById('overlayImage').addEventListener('change', handleImageOverlaySelection, false);
+    document.getElementById('floatCanvas').addEventListener('click', pickColorForPattern, false);
     // April's
     //document.getElementById('genButton').addEventListener('click', generateSomething, false);
     document.getElementById('csvButton').addEventListener('click', saveAsCSV, false);
@@ -116,6 +117,23 @@ function redrawPattern(){
     currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, false);
 }
 
+function pickColorForPattern(event){
+	if(currentlyLoadedPattern !== undefined && overlayImg !== null){
+		var canvas = document.getElementById('floatCanvas');
+		var overlayDiv = document.getElementById('overlayDiv');
+		
+		var ctx = canvas.getContext('2d');
+		var x = event.clientX -overlayDiv.left;
+		var y = event.clientY -overlayDiv.top;
+		//TODO: IF THE IMAGE HAS BEEN MANIPULATED, WE NEED TO ADJUST X AND Y BY THAT AMOUNT!!!
+		console.log("picking from image at " + x + ", " + y);
+		var pixel = ctx.getImageData(x, y, 0, 0);
+		var data = pixel.data;
+		currentlyLoadedPattern.setNextColor(data[0], data[1], data[2]);
+		redrawPattern();
+	}
+}
+
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -192,7 +210,7 @@ function showOverlayDiv(img){
 	
 	img.onload = function(){
 		overlayImg = img;
-		resetOverlayVars();
+		resetOverlayVars(0, 0, img.width, img.height);
 		redrawOverlayImage();
 	};
 	
@@ -216,9 +234,9 @@ function hideOverlayDiv(){
 }
 
 // Should send in size of canvas...
-function resetOverlayVars(){
+function resetOverlayVars(x, y, w, h){
 	overlayVars = {
-		dx:0, dy:0, width:1000, height:1000
+		dx:x, dy:y, width:w, height:h
 	};
 }
 
@@ -308,6 +326,19 @@ function moveFloatingImage(direction){
 }
 
 function stretchFloatingImage(direction){
+	/* // I thought this would work, but it seems like some of the sample images are REALLY BADLY SKEWED, so to get any good data at all I'm doing it the other way
+	if (direction === "shrinkVert" || direction === 'shrinkHori'){
+		overlayVars.height--;
+		overlayVars.width--;
+		overlayVars.dx++;
+		overlayVars.dy++;
+	} else if (direction === "growVert" || direction === 'growHori'){
+		overlayVars.height++;
+		overlayVars.width++;
+		overlayVars.dx--;
+		overlayVars.dy--;
+	} else {
+	*/
 	if (direction === "shrinkVert"){
 		overlayVars.height--;
 	} else if (direction === "growVert"){
@@ -445,6 +476,8 @@ function saveOverlayAsPngSmall(evt){
 	var canvas = document.getElementById('secretCanvas');
 	// TRANSFER CANVAS HERE!!!!
 	var dstCtx = canvas.getContext('2d');
+	
+	dstCtx.clearRect(0, 0, canvas.width, canvas.height);
 	dstCtx.drawImage(srcCanvas, 0, 0, 227, 227);
 	
 	var name = "smOverlay.png";

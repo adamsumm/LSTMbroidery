@@ -37,6 +37,7 @@
 		this.oldTop = 0;
 		this.currentColorIndex = 0;
 		this.loadedFileName = "";
+		this.replaceColorIndex = 0;
 	}
 
 	Pattern.prototype.addColorRgb = function (r, g, b, description) {
@@ -45,6 +46,24 @@
 
 	Pattern.prototype.addColor = function (color) {
 		this.colors[this.colors.length] = color;
+	};
+	
+	Pattern.prototype.setNextColor = function(r, g, b){
+		if(this.colors.length > 0){
+			var color = new Color(r, g, b, "picked");
+			if(this.replaceColorIndex < this.colors.length){
+				// replace index and increment
+				this.colors[this.replaceColorIndex] = color;
+				this.replaceColorIndex++;
+			} else {
+				// wrap around to 0 and increment past it
+				this.colors[0] = color;
+				this.replaceColorIndex = 1;
+			}
+		} else {
+			// No colors to set? o.O?
+			console.log("Cannot set color of a list with no colors!");
+		}
 	};
 
 	Pattern.prototype.addStitchAbs = function (x, y, flags, isAutoColorIndex) {
@@ -252,9 +271,6 @@
 	};
 	
 	Pattern.prototype.drawShape = function(canvas, scale, showPoints) {
-		canvas.width = canvas.width;
-		//canvas.width = this.right;
-		//canvas.height = this.bottom;
 		var stScale = 1;
 		
 		if (scale !== undefined && scale < 1 && scale >= 0){
@@ -270,6 +286,7 @@
 		
 		if (canvas.getContext) {
 			var ctx = canvas.getContext('2d');
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 			if(showPoints !== undefined && showPoints === true){
 				// Since we skip the first stitch in drawing lines, draw its needle position here
