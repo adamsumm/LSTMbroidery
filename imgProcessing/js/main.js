@@ -120,14 +120,19 @@ function redrawPattern(){
 function pickColorForPattern(event){
 	if(currentlyLoadedPattern !== undefined && overlayImg !== null){
 		var canvas = document.getElementById('floatCanvas');
-		var overlayDiv = document.getElementById('overlayDiv');
+		var overlayDiv = $('overlayDiv');
+		
+		var rect = canvas.getBoundingClientRect();
+		console.log("rect" + rect.left + ", " + rect.top);
+		console.log(overlayDiv.offset.left + ", " + overlayDiv.offset.top);
+		
 		
 		var ctx = canvas.getContext('2d');
-		var x = event.clientX -overlayDiv.left;
-		var y = event.clientY -overlayDiv.top;
+		var x = Math.floor(event.clientX -rect.left) +1;
+		var y = Math.floor(event.clientY -rect.top) +1;
 		//TODO: IF THE IMAGE HAS BEEN MANIPULATED, WE NEED TO ADJUST X AND Y BY THAT AMOUNT!!!
 		console.log("picking from image at " + x + ", " + y);
-		var pixel = ctx.getImageData(x, y, 0, 0);
+		var pixel = ctx.getImageData(x, y, 1, 1);
 		var data = pixel.data;
 		currentlyLoadedPattern.setNextColor(data[0], data[1], data[2]);
 		redrawPattern();
