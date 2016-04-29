@@ -39,6 +39,26 @@
 		this.loadedFileName = "";
 		this.replaceColorIndex = 0;
 	}
+	
+	Pattern.prototype.rainbowifyColors = function(){
+		console.log("rainbowifying Colors...");
+		var colorRange = 360 * (9/10); // 90% of colors 0-90%
+		var stepSize = Math.floor(colorRange/this.colors.length);
+		var currentHue = 0;
+		console.log(this.colors[0]);
+		
+		for(var i = 0; i < this.colors.length; i++){
+			console.log("At h value " + currentHue);
+			var newColor = tinycolor("hsl(" + currentHue + ", 100%, 50%)");
+			currentHue += stepSize;
+			
+			newColor.toRgb();
+			console.log(newColor.toRgb());
+			this.colors[i].r = newColor.toRgb().r;
+			this.colors[i].g = newColor.toRgb().g;
+			this.colors[i].b = newColor.toRgb().b;
+		}
+	};
 
 	Pattern.prototype.addColorRgb = function (r, g, b, description) {
 		this.colors[this.colors.length] = new Color(r, g, b, description);
@@ -70,6 +90,7 @@
 		if ((flags & stitchTypes.end) === stitchTypes.end) {
 			this.calculateBoundingBox();
 			this.fixColorCount();
+			this.rainbowifyColors();
 		}
 		if (((flags & stitchTypes.stop) === stitchTypes.stop) && this.stitches.length === 0) {
 			return;

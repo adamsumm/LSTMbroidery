@@ -15,8 +15,8 @@
     </style>
   </head>
   <body>
-    <h3>Select a .DST, .EXP, .JEF, .PCS, .PEC, .PES, .VP3, or .XXX file to process:</h3>
-        <input type="file" id="files" name="files[]" />
+    <!--<h3>Select a .DST, .EXP, .JEF, .PCS, .PEC, .PES, .VP3, or .XXX file to process:</h3>-->
+     <input type="file" id="files" name="files[]" />
     <!-- <div id="fileDropBox">Drop files here.</div> -->
     <!--<button id="genButton">Generate Something!</button> -->
     <button id="csvButton">Save as CSV</button>
@@ -25,16 +25,21 @@
     <input type="file" id="overlayImage" name="overlayFile"  />
     <button id="pngOverlay">Save Overlay as .png</button>
     <button id="pngOverlaySmall">Save Overlay as 227px .png</button>
+    <button id="toggleDots">Toggle Big Dots</button>
+    <canvas id="colorSample" width="20" height="20" style="border:1px solid;"></canvas>
     <br />
     
-    <canvas id="tinycanvas" width="227" height="227" style="border:1px solid"></canvas>
-    <canvas id="medcanvas" width="500" height="500" style="border:1px solid"></canvas>
-    <canvas id="mycanvas" width="1000" height="1000" style="border:1px solid"></canvas>
-    <div id="overlayDiv" style="visibility: hidden; position: absolute;">
-    	<canvas id="floatCanvas" width="1000" height="1000"></canvas>
+    <div>
+	    <canvas id="tinycanvas" width="227" height="227" style="border:1px solid; float: left;"></canvas>
+	    <canvas id="medcanvas" width="500" height="500" style="border:1px solid; float: left;"></canvas>
+	    <canvas id="mycanvas" width="1000" height="1000" style="border:1px solid; float: left;"></canvas>
+	    <div id="overlayDiv" style="visibility: hidden; position: absolute;">
+	    	<canvas id="floatCanvas" width="1000" height="1000"></canvas>
+	    </div>
+	    <canvas id="secretCanvas" style="visibility: hidden;" width="227" height="227"></canvas>
     </div>
-    <canvas id="secretCanvas" style="visibility: hidden;" width="227" height="227"></canvas>
     
+    <script src="js/libs/tinycolor-min.js"></script>
     <script src="js/libs/jdataview.js"></script>
     <script src="js/libs/FileSaver.js"></script>
     <script src="js/libs/pattern.js"></script>

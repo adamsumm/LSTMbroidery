@@ -13,6 +13,7 @@ if (!window.FileReader) {
     document.getElementById('files').addEventListener('change', handleFileSelection, false);
     document.getElementById('overlayImage').addEventListener('change', handleImageOverlaySelection, false);
     document.getElementById('floatCanvas').addEventListener('click', pickColorForPattern, false);
+    document.getElementById('floatCanvas').addEventListener('mousemove', sampleColorForPattern, false);
     // April's
     //document.getElementById('genButton').addEventListener('click', generateSomething, false);
     document.getElementById('csvButton').addEventListener('click', saveAsCSV, false);
@@ -20,6 +21,7 @@ if (!window.FileReader) {
     document.getElementById('pngSaveBig').addEventListener('click', saveBigAsPng, false);
     document.getElementById('pngOverlay').addEventListener('click', saveOverlayAsPng, false);
     document.getElementById('pngOverlaySmall').addEventListener('click', saveOverlayAsPngSmall, false);
+    document.getElementById('toggleDots').addEventListener('click', toggleDotsOnBigCanvas, false);
 }
 
 function handleDragOver(evt) {
@@ -108,13 +110,54 @@ function displayFileText(filename, evt) {
 
     pattern.loadedFileName = filename;
     currentlyLoadedPattern = pattern;
-    redrawPattern();
+    redrawPattern(false, false, false);
 }
 
-function redrawPattern(){
-	currentlyLoadedPattern.drawShape(document.getElementById('mycanvas'), 1, true);
-    currentlyLoadedPattern.drawShape(document.getElementById('medcanvas'), .5, false);
-    currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, false);
+var lastBigDraw = true;
+
+function redrawPattern(big, med, small){
+	if(big !== undefined){
+		currentlyLoadedPattern.drawShape(document.getElementById('mycanvas'), 1, big);
+		lastBigDraw = big;
+	} else {
+		currentlyLoadedPattern.drawShape(document.getElementById('mycanvas'), 1, true);
+	}
+	
+	if(med !== undefined){
+		currentlyLoadedPattern.drawShape(document.getElementById('medcanvas'), .5, med);
+	} else {
+		currentlyLoadedPattern.drawShape(document.getElementById('medcanvas'), .5, false);
+	}
+	
+	if(small !== undefined){
+		currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, small);
+	} else {
+		currentlyLoadedPattern.drawShape(document.getElementById('tinycanvas'), 227/1000, false);
+	}
+}
+
+function toggleDotsOnBigCanvas(event){
+	if(lastBigDraw === true){
+		redrawPattern(false, false, false);
+	} else {
+		redrawPattern(true, false, false);
+	}
+}
+
+function sampleColorForPattern(event){
+	var canvas = document.getElementById('floatCanvas');
+	var rect = canvas.getBoundingClientRect();
+	var ctx = canvas.getContext('2d');
+	var x = Math.floor(event.clientX -rect.left) +1;
+	var y = Math.floor(event.clientY -rect.top) +1;
+	var pixel = ctx.getImageData(x, y, 1, 1);
+	var data = pixel.data;
+	//console.log("sampling from canvas at " + x + ", " + y);
+	
+	var colorSampleCanvas = document.getElementById('colorSample');
+	var csctx = colorSampleCanvas.getContext('2d');
+	csctx.fillStyle = "rgb(" + data[0] + ", " + data[1] + ", " + data[2] + ")";
+	csctx.fillRect(0, 0, colorSampleCanvas.width, colorSampleCanvas.height);
 }
 
 function pickColorForPattern(event){
@@ -135,7 +178,7 @@ function pickColorForPattern(event){
 		var pixel = ctx.getImageData(x, y, 1, 1);
 		var data = pixel.data;
 		currentlyLoadedPattern.setNextColor(data[0], data[1], data[2]);
-		redrawPattern();
+		redrawPattern(false, false, false);
 	}
 }
 
@@ -278,35 +321,35 @@ function keyUp(e){
 
 function update(){
 	if(keys[87] === true){ //w
-		console.log("w...");
+		//console.log("w...");
 		moveFloatingImage("up");
 	}
 	if(keys[65] === true){ // a
-		console.log("a...");
+		//console.log("a...");
 		moveFloatingImage("left");
 	}
 	if(keys[83] === true){ // s
-		console.log("s...");
+		//console.log("s...");
 		moveFloatingImage("down");
 	}
 	if(keys[68] === true){ // d
-		console.log("d...");
+		//console.log("d...");
 		moveFloatingImage("right");
 	}
 	if(keys[73] === true){ // i
-		console.log("i...");
+		//console.log("i...");
 		stretchFloatingImage("shrinkVert");
 	}
 	if(keys[74] === true){ // j
-		console.log("j...");
+		//console.log("j...");
 		stretchFloatingImage("shrinkHori");
 	}
 	if(keys[75] === true){ // k
-		console.log("k...");
+		//console.log("k...");
 		stretchFloatingImage("growVert");
 	}
 	if(keys[76] === true){ // l
-		console.log("l...");
+		//console.log("l...");
 		stretchFloatingImage("growHori");
 	}
 }
@@ -331,19 +374,6 @@ function moveFloatingImage(direction){
 }
 
 function stretchFloatingImage(direction){
-	/* // I thought this would work, but it seems like some of the sample images are REALLY BADLY SKEWED, so to get any good data at all I'm doing it the other way
-	if (direction === "shrinkVert" || direction === 'shrinkHori'){
-		overlayVars.height--;
-		overlayVars.width--;
-		overlayVars.dx++;
-		overlayVars.dy++;
-	} else if (direction === "growVert" || direction === 'growHori'){
-		overlayVars.height++;
-		overlayVars.width++;
-		overlayVars.dx--;
-		overlayVars.dy--;
-	} else {
-	*/
 	if (direction === "shrinkVert"){
 		overlayVars.height--;
 	} else if (direction === "growVert"){
