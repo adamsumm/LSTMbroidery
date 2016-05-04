@@ -7,28 +7,12 @@ from keras.layers import Convolution2D, MaxPooling2D, ZeroPadding2D
 import numpy as np
 import theano
 import theano.tensor as T
-
+import random
+import sys
+import h5py
 maxlen = 16
 
 outputDim = 128
-# first, let's define an image model that
-# will encode pictures into 128-dimensional vectors.
-# it should be initialized with pre-trained weights.
-image_model = Sequential()
-image_model.add(Convolution2D(32, 3, 3, border_mode='valid', input_shape=(3, 100, 100)))
-image_model.add(Activation('relu'))
-image_model.add(Convolution2D(32, 3, 3))
-image_model.add(Activation('relu'))
-image_model.add(MaxPooling2D(pool_size=(2, 2)))
-
-image_model.add(Convolution2D(64, 3, 3, border_mode='valid'))
-image_model.add(Activation('relu'))
-image_model.add(Convolution2D(64, 3, 3))
-image_model.add(Activation('relu'))
-image_model.add(MaxPooling2D(pool_size=(2, 2)))
-
-image_model.add(Flatten())
-image_model.add(Dense(128))
 
 def VGG_16(weights_path=None,outputDim=128):
     model = Sequential()
@@ -84,8 +68,8 @@ def VGG_16(weights_path=None,outputDim=128):
 
 
 #LSTM size
-lstmSize = 16
-numLayers = 2
+lstmSize = 2
+numLayers = 1
 #stroke = [x,y,start,end,jump]
 #strokeProb = [mu_x,sigma_x,mu_y,sigma_y,corr, binomial_start,binomial_end,binomial_jump]
 image_model = VGG_16('vgg16_weights.h5',outputDim)
@@ -138,3 +122,19 @@ def strokeError(y_true, stroke_pred):
 
 
 model.compile(loss=strokeError, optimizer='adadelta')
+
+f = h5py.File(sys.argv[1])
+imgs = np.array(f['imgs'])
+img_seq = np.array(f['img_seq'])
+stitch_next = np.array(f['stitch_next'])
+stitch_seq = np.array(f['stitch_seq'])
+f.close()
+
+def getBatches(imgs,img_seq,stitch_next,stitch_seq):
+    seq = range(len(img_seq))
+    while True:
+        random.shuffle(seq)
+        for s in seq:
+            yield [imgs[img_seq[s]], stitch_seq[s]],stitch_next[s]
+while True:
+    model.fit_generator(getBatches(imgs,img_seq,stitch_next,stitch_seq),10,1)
